@@ -92,6 +92,13 @@ export default class MigrationManager {
         });
       return propObject;
     }
+    /**
+     * e.g. {
+     *  type: String or [String, Number],
+     *  required: true | false
+     *  default: false
+     * }
+     */
     if (propNode.isKind(SyntaxKind.ObjectLiteralExpression)) {
       propObject = addPropertyObject(propsObject, propName, propNode.getText());
       if (!propObject.getProperty('type')) {
