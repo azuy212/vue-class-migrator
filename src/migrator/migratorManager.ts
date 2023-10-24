@@ -215,19 +215,18 @@ export default class MigrationManager {
   }
 }
 
+const getClassWithComponentDecorator = (file: SourceFile) => file
+  .getClasses()
+  .filter((clazz) => clazz.getDecorator('Component'))
+  .pop();
+
 export const createMigrationManager = (
   sourceFile: SourceFile,
   outFile: SourceFile,
 ): MigrationManager => {
   // Do not modify this class.
-  const sourceFileClass = sourceFile
-    .getClasses()
-    .filter((clazz) => clazz.getDecorator('Component'))
-    .pop();
-  const outClazz = outFile
-    .getClasses()
-    .filter((clazz) => clazz.getDecorator('Component'))
-    .pop();
+  const sourceFileClass = getClassWithComponentDecorator(sourceFile);
+  const outClazz = getClassWithComponentDecorator(outFile);
 
   if (!sourceFileClass || !outClazz) {
     throw new Error('Class implementing the @Component decorator not found.');
@@ -244,7 +243,9 @@ export const createMigrationManager = (
     });
 
   const defineComponentInitObject = getDefineComponentInit(sourceFileClass);
+
   let clazzReplacement: string;
+
   if (!outClazz.getDefaultKeyword()) {
     // Non default exported class
     clazzReplacement = [
