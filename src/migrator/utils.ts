@@ -4,6 +4,7 @@ import type {
   ClassDeclaration,
   PropertyDeclaration,
   Node,
+  Expression,
 } from 'ts-morph';
 import { SyntaxKind } from 'ts-morph';
 
@@ -55,12 +56,12 @@ export const extractPropertiesWithDecorator = (
   .getProperties()
   .filter((prop) => prop.getDecorator(decoratorName));
 
-export const stringNodeToSTring = (node: Node): string => {
+export const stringNodeToSTring = (nodeOrExpression: Node | Expression): string => {
   if (
-    node.isKind(SyntaxKind.StringLiteral)
-    || node.isKind(SyntaxKind.NoSubstitutionTemplateLiteral)
+    nodeOrExpression.isKind(SyntaxKind.StringLiteral)
+    || nodeOrExpression.isKind(SyntaxKind.NoSubstitutionTemplateLiteral)
   ) {
-    return node.getLiteralText();
+    return nodeOrExpression.getLiteralText();
   }
-  throw new Error(`Node is not a string: ${node.getKindName()}`);
+  throw new Error(`Node is not a string: ${nodeOrExpression.getKindName()}`);
 };
