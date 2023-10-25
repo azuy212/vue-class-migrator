@@ -6,6 +6,7 @@ import migrateModelSyncs from './modelSync';
 import migrateRefs from './ref';
 import migrateWatchers from './watch';
 import migrateEmits from './emit';
+import migrateProvide from './provide';
 
 export default (migrationManager: MigrationManager) => {
   migrateProps(migrationManager);
@@ -15,6 +16,7 @@ export default (migrationManager: MigrationManager) => {
   migrateRefs(migrationManager);
   migrateWatchers(migrationManager);
   migrateEmits(migrationManager);
+  migrateProvide(migrationManager);
 };
 
 export const supportedDecorators = [
@@ -25,4 +27,5 @@ export const supportedDecorators = [
   'ModelSync',
   'Watch',
   'Emit',
+  'Provide',
 ]; // Class Property decorators
