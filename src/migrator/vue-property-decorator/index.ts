@@ -7,6 +7,7 @@ import migrateRefs from './ref';
 import migrateWatchers from './watch';
 import migrateEmits from './emit';
 import migrateProvide from './provide';
+import migrateInject from './inject';
 
 export default (migrationManager: MigrationManager) => {
   migrateProps(migrationManager);
@@ -17,6 +18,7 @@ export default (migrationManager: MigrationManager) => {
   migrateWatchers(migrationManager);
   migrateEmits(migrationManager);
   migrateProvide(migrationManager);
+  migrateInject(migrationManager);
 };
 
 export const supportedDecorators = [
@@ -28,4 +30,5 @@ export const supportedDecorators = [
   'Watch',
   'Emit',
   'Provide',
+  'Inject',
 ]; // Class Property decorators
