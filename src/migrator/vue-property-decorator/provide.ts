@@ -1,6 +1,6 @@
 import { SyntaxKind } from 'ts-morph';
 import type MigrationManager from '../migratorManager';
-import { extractPropertiesWithDecorator, stringNodeToSTring } from '../utils';
+import { extractPropertiesWithDecorator } from '../utils';
 import { getDataMethod } from '../vue-class-component/migrate-data';
 
 export default (migrationManager: MigrationManager) => {
@@ -28,10 +28,10 @@ export default (migrationManager: MigrationManager) => {
   const { returnObject } = getDataMethod(clazz, mainObject);
 
   provideProperties.forEach((property) => {
-    const propertyArgs = property.getDecoratorOrThrow('Provide').getArguments();
+    const propertyArgs = property.getDecoratorOrThrow('Provide').getArguments()[0];
     const provideValue = property.getInitializerOrThrow().getText();
     const propertyName = property.getName();
-    const provideKey = propertyArgs[0] ? stringNodeToSTring(propertyArgs[0]) : propertyName;
+    const provideKey = propertyArgs?.getText() ?? `'${propertyName}'`;
 
     returnObject.addPropertyAssignment({
       name: propertyName,

@@ -27,7 +27,7 @@ describe('@Provide decorator', () => {
       export default defineComponent({
                   provide() {
                     return {
-                      foo: this.foo
+                      'foo': this.foo
                     }
                   },
                   data() {
@@ -51,7 +51,7 @@ describe('@Provide decorator', () => {
       export default defineComponent({
                   provide() {
                     return {
-                      bar: this.baz
+                      'bar': this.baz
                     }
                   },
                   data() {
@@ -77,9 +77,9 @@ describe('@Provide decorator', () => {
       export default defineComponent({
                   provide() {
                     return {
-                      provide1Key: this.provide1,
-                      provide2Key: this.provide2,
-                      provide3: this.provide3
+                      'provide1Key': this.provide1,
+                      'provide2Key': this.provide2,
+                      'provide3': this.provide3
                     }
                   },
                   data() {
