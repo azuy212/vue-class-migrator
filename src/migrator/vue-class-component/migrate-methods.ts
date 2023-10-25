@@ -21,7 +21,8 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
     .filter(
       (m) => !vueSpecialMethods.includes(m.getName())
         && !['data'].includes(m.getName())
-        && !m.getDecorator('Watch'),
+        && !m.getDecorator('Watch')
+        && !m.getDecorator('Emit'),
     );
 
   if (methods.length) {
