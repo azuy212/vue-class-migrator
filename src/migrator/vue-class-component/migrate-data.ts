@@ -94,7 +94,12 @@ export const getDataMethod = (clazz: ClassDeclaration, mainObject: ObjectLiteral
 };
 
 export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) => {
-  const classPropertyData = clazz.getProperties().filter((prop) => !prop.getDecorators().length);
+  const ignoredPropertyNames = ['$props', '$slots', '$scopedSlots'];
+
+  const classPropertyData = clazz.getProperties().filter((prop) => {
+    const propertyName = prop.getName();
+    return !prop.getDecorators().length && !ignoredPropertyNames.includes(propertyName);
+  });
   const componentDecoratorDataMethod = mainObject.getProperty('data');
   const clazzDataMethod = clazz.getMethod('data');
   if (clazzDataMethod && componentDecoratorDataMethod) {
