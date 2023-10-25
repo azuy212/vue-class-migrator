@@ -3,10 +3,10 @@ import {
   Node,
   ObjectLiteralExpression,
   OptionalKind,
-  ParameterDeclarationStructure,
   SourceFile,
   SyntaxKind,
   TypeNode,
+  MethodDeclarationStructure,
 } from 'ts-morph';
 import { addPropertyObject, getArrayProperty, getObjectProperty } from './utils';
 import { ComputedProps, MigratePartProps } from './types/migrator';
@@ -147,12 +147,8 @@ export default class MigrationManager {
     }
   }
 
-  addMethod(options: {
+  addMethod(options: Pick<OptionalKind<MethodDeclarationStructure>, 'statements' | 'returnType' | 'isAsync' | 'parameters'> & {
     methodName: string;
-    parameters: OptionalKind<ParameterDeclarationStructure>[] | undefined;
-    statements: string;
-    isAsync?: boolean;
-    returnType?: string;
   }) {
     const methodsMainObject = getObjectProperty(this.mainObject, 'methods');
 
