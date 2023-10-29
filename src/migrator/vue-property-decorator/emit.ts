@@ -1,4 +1,8 @@
-import { SyntaxKind } from 'ts-morph';
+import {
+  IfStatement,
+  Statement,
+  SyntaxKind,
+} from 'ts-morph';
 import type MigrationManager from '../migratorManager';
 import { stringNodeToSTring } from '../utils';
 
@@ -8,20 +12,34 @@ export default (migrationManager: MigrationManager) => {
 
   const emitMethods = clazz.getMethods().filter((method) => method.getDecorator('Emit'));
   emitMethods.forEach((method) => {
-    const decoratorArgs = method.getDecoratorOrThrow('Emit')?.getArguments();
-    const eventName = stringNodeToSTring(decoratorArgs[0]);
-    const returnTypeNodeText = method.getReturnTypeNode()?.getText();
+    const decorators = method.getDecorators().filter((decorator) => decorator.getName() === 'Emit');
     const isAsync = method.isAsync();
     const methodParams = method.getParameters();
     const methodName = method.getName();
+    const methodStatements = method.getStatements();
+
+    const ifStatements = methodStatements.filter(
+      (
+        statement,
+      ): statement is IfStatement => Statement.isIfStatement(
+        statement,
+      ),
+    );
+
+    if (ifStatements.length !== 0) {
+      throw new Error('Conditional emit params not supported yet');
+    }
+
     const methodReturnStatement = method.getStatementByKind(SyntaxKind.ReturnStatement);
-    const methodNonReturnStatements = method
-      .getStatements()
-      .filter((statement) => statement.getKind() !== SyntaxKind.ReturnStatement);
+    const methodOtherStatements = methodStatements
+      .filter(
+        (
+          statement,
+        ) => !Statement.isReturnStatement(statement),
+      );
 
     const baseOptions = {
       methodName,
-      returnType: returnTypeNodeText,
       isAsync,
       parameters: methodParams.length ? methodParams.map((arg) => arg.getStructure()) : undefined,
     };
@@ -29,25 +47,32 @@ export default (migrationManager: MigrationManager) => {
     migrationManager.addMethod({
       ...baseOptions,
       statements(writer) {
-        methodNonReturnStatements.forEach((statement) => {
+        methodOtherStatements.forEach((statement) => {
           writer.writeLine(statement.getText());
         });
 
-        if (methodParams.length === 0 && !methodReturnStatement) {
-          writer.writeLine(`this.$emit('${eventName}')`);
-          return;
-        }
+        decorators.forEach((decorator) => {
+          const decoratorArgs = decorator.getArguments();
+          const eventName = decoratorArgs[0]
+            ? stringNodeToSTring(decoratorArgs[0])
+            : method.getName();
 
-        let emitArgs = new Set<string>(
-          [...methodParams.map((arg) => arg.getNameNode()?.getText())],
-        );
+          if (methodParams.length === 0 && !methodReturnStatement) {
+            writer.writeLine(`this.$emit('${eventName}')`);
+            return;
+          }
 
-        if (methodReturnStatement) {
-          emitArgs = new Set(
-            [methodReturnStatement.getExpressionOrThrow().getText(), ...Array.from(emitArgs)],
+          let emitArgs = new Set<string>(
+            [...methodParams.map((arg) => arg.getNameNode()?.getText())],
           );
-        }
-        writer.writeLine(`this.$emit('${eventName}', ${Array.from(emitArgs).join(', ')})`);
+
+          if (methodReturnStatement) {
+            emitArgs = new Set(
+              [methodReturnStatement.getExpressionOrThrow().getText(), ...Array.from(emitArgs)],
+            );
+          }
+          writer.writeLine(`this.$emit('${eventName}', ${Array.from(emitArgs).join(', ')})`);
+        });
       },
     });
   });

@@ -1,4 +1,4 @@
-import { project, expectMigration } from '../utils';
+import { project, expectMigration, expectMigrationToThrow } from '../utils';
 
 describe('@Emit decorator', () => {
   afterAll(() => {
@@ -18,6 +18,26 @@ describe('@Emit decorator', () => {
                 export default defineComponent({
                   methods: {
                     emitChangeEvent() {
+                      this.$emit('change')
+                    }
+                  }
+                })`,
+    );
+  });
+
+  test('@Emit simple without args', async () => {
+    await expectMigration(
+      `@Component
+                export default class Test extends Vue {
+                    @Emit()
+                    change() {}
+                }`,
+      // Result
+      `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                  methods: {
+                    change() {
                       this.$emit('change')
                     }
                   }
@@ -237,6 +257,50 @@ describe('@Emit decorator', () => {
                       const value = 'some value'
                       const unusedValue = 'new unused value'
                       this.$emit('change', value, someValue)
+                    }
+                  }
+                })`,
+    );
+  });
+
+  test('@Emit with multiple return statements', async () => {
+    await expectMigrationToThrow(
+      `@Component
+                export default class Test extends Vue {
+                    @Emit('change')
+                    emitChangeEvent() {
+                     if (conditionalValue === true) {
+                        return 'another value'
+                     }
+                      return value
+                    }
+                }`,
+      'Conditional emit params not supported yet',
+    );
+  });
+
+  test('Multiple @Emit decorators', async () => {
+    await expectMigration(
+      `@Component
+                export default class Test extends Vue {
+                    @Emit('change')
+                    @Emit('input')
+                    emitChangeEvent(someValue: number) {
+                      const value = 'some value'
+                      const unusedValue = 'new unused value'
+                      return value
+                    }
+                }`,
+      // Result
+      `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                  methods: {
+                    emitChangeEvent(someValue: number) {
+                      const value = 'some value'
+                      const unusedValue = 'new unused value'
+                      this.$emit('change', value, someValue)
+                      this.$emit('input', value, someValue)
                     }
                   }
                 })`,
