@@ -15,6 +15,8 @@ export default (migrationManager: MigrationManager) => {
     const decorators = method.getDecorators().filter((decorator) => decorator.getName() === 'Emit');
     const isAsync = method.isAsync();
     const methodParams = method.getParameters();
+    const methodTypeParams = method.getTypeParameters();
+    const methodTypeParamsStructure = methodTypeParams.map((p) => p.getStructure());
     const methodName = method.getName();
     const methodStatements = method.getStatements();
 
@@ -42,6 +44,7 @@ export default (migrationManager: MigrationManager) => {
       methodName,
       isAsync,
       parameters: methodParams.length ? methodParams.map((arg) => arg.getStructure()) : undefined,
+      typeParameters: methodTypeParamsStructure,
     };
 
     migrationManager.addMethod({

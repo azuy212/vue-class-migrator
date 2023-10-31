@@ -306,4 +306,30 @@ describe('@Emit decorator', () => {
                 })`,
     );
   });
+
+  test('Emit decorator fn with type params', async () => {
+    await expectMigration(
+      `@Component
+                export default class Test extends Vue {
+                    @Emit('change')
+                    emitChangeEvent<T>(someValue: T) {
+                      const value = 'some value'
+                      const unusedValue = 'new unused value'
+                      return value
+                    }
+                }`,
+      // Result
+      `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                  methods: {
+                    emitChangeEvent<T>(someValue: T) {
+                      const value = 'some value'
+                      const unusedValue = 'new unused value'
+                      this.$emit('change', value, someValue)
+                    }
+                  }
+                })`,
+    );
+  });
 });

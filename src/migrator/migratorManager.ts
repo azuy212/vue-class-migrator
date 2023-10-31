@@ -147,7 +147,7 @@ export default class MigrationManager {
     }
   }
 
-  addMethod(options: Pick<OptionalKind<MethodDeclarationStructure>, 'statements' | 'returnType' | 'isAsync' | 'parameters'> & {
+  addMethod(options: Pick<OptionalKind<MethodDeclarationStructure>, 'statements' | 'returnType' | 'isAsync' | 'parameters' | 'typeParameters'> & {
     methodName: string;
   }) {
     const methodsMainObject = getObjectProperty(this.mainObject, 'methods');
@@ -161,6 +161,7 @@ export default class MigrationManager {
       isAsync: options.isAsync,
       returnType: options.returnType,
       statements: options.statements,
+      typeParameters: options?.typeParameters,
     });
   }
 
