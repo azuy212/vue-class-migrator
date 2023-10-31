@@ -135,7 +135,7 @@ describe('Data Property Migration', () => {
                 export default defineComponent({
                     data() {
                         const goodbye: string = "goodbye";
-                        
+
                         return {
                             sun,
                             moon: false,
@@ -206,7 +206,7 @@ describe('Data Property Migration', () => {
                 export default defineComponent({
                     data() {
                         const myProp: number = undefined;
-                    
+
                         return {
                             myProp,
                             myProp2: undefined,
@@ -259,7 +259,7 @@ describe('Data Property Migration', () => {
                                     },
                                     },
                                 };
-                                
+
                         return {
                             data
                         };
@@ -326,6 +326,26 @@ describe('Data Property Migration', () => {
                     $scopedSlots!: {
                         someProp?: string
                     }
+                }`,
+        `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                    data() {
+                        return {
+                            myProp1: 'test string' as string | number
+                        };
+                    }
+                })`,
+      );
+    });
+
+    test('Should ignore "static components: "', async () => {
+      expectMigration(
+        `@Component
+                export default class Test extends Vue {
+                    static components: typeof COMPONENTS
+
+                    myProp1 = 'test string' as string | number;
                 }`,
         `import { defineComponent } from "vue";
 

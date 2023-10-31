@@ -98,7 +98,9 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
 
   const classPropertyData = clazz.getProperties().filter((prop) => {
     const propertyName = prop.getName();
-    return !prop.getDecorators().length && !ignoredPropertyNames.includes(propertyName);
+    return !prop.getDecorators().length
+     && !ignoredPropertyNames.includes(propertyName)
+     && !(prop.isStatic() && propertyName === 'components');
   });
   const componentDecoratorDataMethod = mainObject.getProperty('data');
   const clazzDataMethod = clazz.getMethod('data');
