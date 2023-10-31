@@ -129,4 +129,33 @@ describe('Methods Property Migration', () => {
       );
     });
   });
+
+  describe('Class methods with generic params', () => {
+    test('method generic params', async () => {
+      await expectMigration(
+        `@Component
+                export default class Test extends Vue {
+                    myGenericMethod<T extends {
+                        start: number | string
+                        end: number | string
+                    }>(options: T[]): T[] {
+                        return options
+                    }
+                }`,
+        // Results
+        `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                    methods: {
+                        myGenericMethod<T extends {
+                            start: number | string
+                            end: number | string
+                        }>(options: T[]): T[] {
+                            return options
+                        }
+                    }
+                })`,
+      );
+    });
+  });
 });
