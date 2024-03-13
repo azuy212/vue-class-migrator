@@ -204,6 +204,17 @@ export default class MigrationManager {
     fallbackType = isFunction ? 'Function' : fallbackType;
 
     if (!propertyConstructorMapping[propertyType]) {
+      if (typeNode?.isKind(SyntaxKind.UnionType)) {
+        const unionTypes = typeNode.getType().getUnionTypes();
+        const unionLiteralTypes = Array.from(
+          new Set(
+            unionTypes.map((type) => propertyConstructorMapping[
+              type.getBaseTypeOfLiteralType().getText()
+            ]),
+          ),
+        );
+        return unionLiteralTypes.length > 1 ? `[${unionLiteralTypes.join(', ')}]` : unionLiteralTypes[0];
+      }
       this.addNamedImport('vue', 'PropType');
       return `${fallbackType} as PropType<${propertyType}>`;
     }
