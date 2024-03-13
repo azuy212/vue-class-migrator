@@ -35,7 +35,7 @@ export const getDataMethod = (clazz: ClassDeclaration, mainObject: ObjectLiteral
       returnObject,
     };
   }
-  // From @Compont data property method
+  // From @Component data property method
   if (componentDecoratorDataMethod) {
     if (componentDecoratorDataMethod.isKind(SyntaxKind.MethodDeclaration)) {
       // MethodDeclaration // data() {}
@@ -113,13 +113,18 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
     const { dataMethod, returnObject } = getDataMethod(clazz, mainObject);
     classPropertyData.forEach((propertyData) => {
       const typeNode = propertyData.getTypeNode()?.getText();
+      const initializer = propertyData.getInitializer()?.getText();
+      if (!initializer) {
+        dataMethod.insertStatements(0, `/* ${propertyData.getText()} */`);
+        return;
+      }
       if (typeNode) {
         dataMethod.insertVariableStatement(0, {
           declarationKind: VariableDeclarationKind.Const,
           declarations: [{
             name: propertyData.getName(),
             type: typeNode,
-            initializer: propertyData.getInitializer()?.getText() ?? 'undefined',
+            initializer,
           }],
         });
         returnObject.addShorthandPropertyAssignment({
@@ -128,7 +133,7 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
       } else {
         returnObject.addPropertyAssignment({
           name: propertyData.getName(),
-          initializer: propertyData.getInitializer()?.getText() ?? 'undefined',
+          initializer,
         });
       }
     });
