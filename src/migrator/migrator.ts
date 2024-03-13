@@ -72,7 +72,7 @@ export const migrateFile = async (project: Project, sourceFile: SourceFile) => {
 };
 
 export const migrateDirectory = async (directoryPath: string, toSFC: boolean) => {
-  const directoryToMigrate = path.join(process.cwd(), directoryPath);
+  const directoryToMigrate = path.resolve(process.cwd(), directoryPath);
   const project = new Project({});
 
   project.addSourceFilesAtPaths(`${directoryToMigrate}/**/*.(ts|vue|scss)`)
@@ -93,12 +93,15 @@ export const migrateDirectory = async (directoryPath: string, toSFC: boolean) =>
   );
 
   const migrationPromises = finalFilesToMigrate
-    .map((sourceFile) => migrateFile(project, sourceFile)
-      .catch((err) => {
-        logger.error(`Error migrating ${sourceFile.getFilePath()}`);
-        logger.error(err);
-        return Promise.reject(err);
-      }));
+    .map((sourceFile, index) => {
+      logger.info(`Progress: ${index + 1}/${finalFilesToMigrate.length} (${Math.round(((index + 1)/finalFilesToMigrate.length)*100)}%)`)
+      return migrateFile(project, sourceFile)
+        .catch((err) => {
+          logger.error(`Error migrating ${sourceFile.getFilePath()}`);
+          logger.error(err);
+          return Promise.reject(err);
+        });
+    });
 
   try {
     await Promise.all(migrationPromises);
@@ -115,5 +118,34 @@ export const migrateDirectory = async (directoryPath: string, toSFC: boolean) =>
 
     logger.info(`Migrating directory: ${directoryToMigrate}, files to SFC`);
     await Promise.all(vueFiles.map((f) => vueFileToSFC(project, f)));
+  }
+};
+
+export const parseAndMigrateFile = async (filePath: string, toSFC: boolean) => {
+  const fileToMigrate = path.resolve(process.cwd(), filePath);
+
+  const project = new Project();
+  const sourceFile = project.addSourceFileAtPath(fileToMigrate);
+
+  if (!['.vue', '.ts'].includes(sourceFile.getExtension())) {
+    throw new Error('Only Vue or TS files are supported');
+  }
+
+  if (!sourceFile.getText().includes('@Component')) {
+    throw new Error('File doesn\'t seems to be a Vue Class Component');
+  }
+
+  try {
+    await migrateFile(project, sourceFile);
+  } catch (error) {
+    return;
+  }
+
+  if (toSFC) {
+    if (sourceFile.getExtension() !== '.vue') {
+      throw new Error('Only Vue files are supported with SFC option');
+    }
+
+    await vueFileToSFC(project, sourceFile);
   }
 };
