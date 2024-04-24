@@ -135,7 +135,7 @@ describe('Data Property Migration', () => {
                 export default defineComponent({
                     data() {
                         const goodbye: string = "goodbye";
-                        
+
                         return {
                             sun,
                             moon: false,
@@ -206,7 +206,7 @@ describe('Data Property Migration', () => {
                 export default defineComponent({
                     data() {
                         const myProp: number = undefined;
-                    
+
                         return {
                             myProp,
                             myProp2: undefined,
@@ -259,9 +259,100 @@ describe('Data Property Migration', () => {
                                     },
                                     },
                                 };
-                                
+
                         return {
                             data
+                        };
+                    }
+                })`,
+      );
+    });
+  });
+
+  describe('Ignored class properties', () => {
+    test('Should ignore $props', async () => {
+      expectMigration(
+        `@Component
+                export default class Test extends Vue {
+                    myProp1 = 'test string' as string | number;
+                    myProp2 = false;
+
+                    $props!: {
+                        someProp?: string
+                        someProp2: Array<number>
+                    }
+                }`,
+        `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                    data() {
+                        return {
+                            myProp1: 'test string' as string | number,
+                            myProp2: false
+                        };
+                    }
+                })`,
+      );
+    });
+
+    test('Should ignore $slots', async () => {
+      expectMigration(
+        `@Component
+                export default class Test extends Vue {
+                    myProp1 = 'test string' as string | number;
+
+                    $slots!: {
+                        someProp?: string
+                    }
+                }`,
+        `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                    data() {
+                        return {
+                            myProp1: 'test string' as string | number
+                        };
+                    }
+                })`,
+      );
+    });
+
+    test('Should ignore $scopedSlots', async () => {
+      expectMigration(
+        `@Component
+                export default class Test extends Vue {
+                    myProp1 = 'test string' as string | number;
+
+                    $scopedSlots!: {
+                        someProp?: string
+                    }
+                }`,
+        `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                    data() {
+                        return {
+                            myProp1: 'test string' as string | number
+                        };
+                    }
+                })`,
+      );
+    });
+
+    test('Should ignore "static components: "', async () => {
+      expectMigration(
+        `@Component
+                export default class Test extends Vue {
+                    static components: typeof COMPONENTS
+
+                    myProp1 = 'test string' as string | number;
+                }`,
+        `import { defineComponent } from "vue";
+
+                export default defineComponent({
+                    data() {
+                        return {
+                            myProp1: 'test string' as string | number
                         };
                     }
                 })`,

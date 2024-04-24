@@ -21,13 +21,19 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
     .filter(
       (m) => !vueSpecialMethods.includes(m.getName())
         && !['data'].includes(m.getName())
-        && !m.getDecorator('Watch'),
+        && !m.getDecorator('Watch')
+        && !m.getDecorator('Emit'),
     );
 
   if (methods.length) {
     const methodsObject = getObjectProperty(mainObject, 'methods');
 
     methods.forEach((method) => {
+      const methodParams = method.getParameters();
+      const methodParamsStructure = methodParams.map((p) => p.getStructure());
+      const methodTypeParams = method.getTypeParameters();
+      const methodTypeParamsStructure = methodTypeParams.map((p) => p.getStructure());
+
       if (method.getDecorators().length) {
         throw new Error(`The method ${method.getName()} has non supported decorators.`);
       }
@@ -35,10 +41,11 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
       const typeNode = method.getReturnTypeNode()?.getText();
       methodsObject.addMethod({
         name: method.getName(),
-        parameters: method.getParameters().map((p) => p.getStructure()),
+        parameters: methodParamsStructure,
         isAsync: method.isAsync(),
         returnType: typeNode,
         statements: method.getBodyText(),
+        typeParameters: methodTypeParamsStructure,
       });
     });
   }

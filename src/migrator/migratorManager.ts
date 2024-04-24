@@ -3,10 +3,10 @@ import {
   Node,
   ObjectLiteralExpression,
   OptionalKind,
-  ParameterDeclarationStructure,
   SourceFile,
   SyntaxKind,
   TypeNode,
+  MethodDeclarationStructure,
 } from 'ts-morph';
 import { addPropertyObject, getArrayProperty, getObjectProperty } from './utils';
 import { ComputedProps, MigratePartProps } from './types/migrator';
@@ -92,6 +92,13 @@ export default class MigrationManager {
         });
       return propObject;
     }
+    /**
+     * e.g. {
+     *  type: String or [String, Number],
+     *  required: true | false
+     *  default: false
+     * }
+     */
     if (propNode.isKind(SyntaxKind.ObjectLiteralExpression)) {
       propObject = addPropertyObject(propsObject, propName, propNode.getText());
       if (!propObject.getProperty('type')) {
@@ -140,12 +147,8 @@ export default class MigrationManager {
     }
   }
 
-  addMethod(options: {
+  addMethod(options: Pick<OptionalKind<MethodDeclarationStructure>, 'statements' | 'returnType' | 'isAsync' | 'parameters' | 'typeParameters'> & {
     methodName: string;
-    parameters: OptionalKind<ParameterDeclarationStructure>[] | undefined;
-    statements: string;
-    isAsync?: boolean;
-    returnType?: string;
   }) {
     const methodsMainObject = getObjectProperty(this.mainObject, 'methods');
 
@@ -158,6 +161,7 @@ export default class MigrationManager {
       isAsync: options.isAsync,
       returnType: options.returnType,
       statements: options.statements,
+      typeParameters: options?.typeParameters,
     });
   }
 
@@ -200,6 +204,17 @@ export default class MigrationManager {
     fallbackType = isFunction ? 'Function' : fallbackType;
 
     if (!propertyConstructorMapping[propertyType]) {
+      if (typeNode?.isKind(SyntaxKind.UnionType)) {
+        const unionTypes = typeNode.getType().getUnionTypes();
+        const unionLiteralTypes = Array.from(
+          new Set(
+            unionTypes.map((type) => propertyConstructorMapping[
+              type.getBaseTypeOfLiteralType().getText()
+            ]),
+          ),
+        );
+        return unionLiteralTypes.length > 1 ? `[${unionLiteralTypes.join(', ')}]` : unionLiteralTypes[0];
+      }
       this.addNamedImport('vue', 'PropType');
       return `${fallbackType} as PropType<${propertyType}>`;
     }
@@ -208,19 +223,18 @@ export default class MigrationManager {
   }
 }
 
+const getClassWithComponentDecorator = (file: SourceFile) => file
+  .getClasses()
+  .filter((clazz) => clazz.getDecorator('Component'))
+  .pop();
+
 export const createMigrationManager = (
   sourceFile: SourceFile,
   outFile: SourceFile,
 ): MigrationManager => {
   // Do not modify this class.
-  const sourceFileClass = sourceFile
-    .getClasses()
-    .filter((clazz) => clazz.getDecorator('Component'))
-    .pop();
-  const outClazz = outFile
-    .getClasses()
-    .filter((clazz) => clazz.getDecorator('Component'))
-    .pop();
+  const sourceFileClass = getClassWithComponentDecorator(sourceFile);
+  const outClazz = getClassWithComponentDecorator(outFile);
 
   if (!sourceFileClass || !outClazz) {
     throw new Error('Class implementing the @Component decorator not found.');
@@ -237,7 +251,9 @@ export const createMigrationManager = (
     });
 
   const defineComponentInitObject = getDefineComponentInit(sourceFileClass);
+
   let clazzReplacement: string;
+
   if (!outClazz.getDefaultKeyword()) {
     // Non default exported class
     clazzReplacement = [

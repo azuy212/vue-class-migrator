@@ -35,7 +35,7 @@ export const getDataMethod = (clazz: ClassDeclaration, mainObject: ObjectLiteral
       returnObject,
     };
   }
-  // From @Compont data property method
+  // From @Component data property method
   if (componentDecoratorDataMethod) {
     if (componentDecoratorDataMethod.isKind(SyntaxKind.MethodDeclaration)) {
       // MethodDeclaration // data() {}
@@ -94,7 +94,14 @@ export const getDataMethod = (clazz: ClassDeclaration, mainObject: ObjectLiteral
 };
 
 export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) => {
-  const classPropertyData = clazz.getProperties().filter((prop) => !prop.getDecorators().length);
+  const ignoredPropertyNames = ['$props', '$slots', '$scopedSlots'];
+
+  const classPropertyData = clazz.getProperties().filter((prop) => {
+    const propertyName = prop.getName();
+    return !prop.getDecorators().length
+     && !ignoredPropertyNames.includes(propertyName)
+     && !(prop.isStatic() && propertyName === 'components');
+  });
   const componentDecoratorDataMethod = mainObject.getProperty('data');
   const clazzDataMethod = clazz.getMethod('data');
   if (clazzDataMethod && componentDecoratorDataMethod) {
@@ -106,13 +113,18 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
     const { dataMethod, returnObject } = getDataMethod(clazz, mainObject);
     classPropertyData.forEach((propertyData) => {
       const typeNode = propertyData.getTypeNode()?.getText();
+      const initializer = propertyData.getInitializer()?.getText();
+      if (!initializer) {
+        dataMethod.insertStatements(0, `/* ${propertyData.getText()} */`);
+        return;
+      }
       if (typeNode) {
         dataMethod.insertVariableStatement(0, {
           declarationKind: VariableDeclarationKind.Const,
           declarations: [{
             name: propertyData.getName(),
             type: typeNode,
-            initializer: propertyData.getInitializer()?.getText() ?? 'undefined',
+            initializer,
           }],
         });
         returnObject.addShorthandPropertyAssignment({
@@ -121,7 +133,7 @@ export default (clazz: ClassDeclaration, mainObject: ObjectLiteralExpression) =>
       } else {
         returnObject.addPropertyAssignment({
           name: propertyData.getName(),
-          initializer: propertyData.getInitializer()?.getText() ?? 'undefined',
+          initializer,
         });
       }
     });

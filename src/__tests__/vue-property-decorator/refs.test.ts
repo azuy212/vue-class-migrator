@@ -21,6 +21,8 @@ describe('@Ref', () => {
                             cache: false,
                             get() {
                               return this.$refs["anotherComponent"] as AnotherComponent;
+                            },
+                            set() {
                             }
                         }
                     }
@@ -33,7 +35,7 @@ describe('@Ref', () => {
         `@Component
                 export default class Test extends Vue {
                     @Ref()
-                    readonly defaultInput!: HTMLInputElement;                  
+                    readonly defaultInput!: HTMLInputElement;
                 }`,
         // Result
         `import { defineComponent } from "vue";
@@ -44,6 +46,8 @@ describe('@Ref', () => {
                             cache: false,
                             get() {
                                 return this.$refs["defaultInput"] as HTMLInputElement;
+                            },
+                            set() {
                             }
                         }
                     }
@@ -56,7 +60,7 @@ describe('@Ref', () => {
         `@Component
                 export default class Test extends Vue {
                     @Ref("actualRef")
-                    readonly defaultInput!: HTMLInputElement;                  
+                    readonly defaultInput!: HTMLInputElement;
                 }`,
         // Result
         `import { defineComponent } from "vue";
@@ -67,6 +71,8 @@ describe('@Ref', () => {
                             cache: false,
                             get() {
                                 return this.$refs["actualRef"] as HTMLInputElement;
+                            },
+                            set() {
                             }
                         }
                     }

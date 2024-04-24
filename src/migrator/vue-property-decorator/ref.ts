@@ -19,6 +19,10 @@ export default (migrationManager: MigrationManager) => {
       get: {
         statements: `return ${refStatement}${refType ? ` as ${refType}` : ''};`,
       },
+      set: {
+        statements: undefined,
+        parameters: undefined,
+      },
     });
   });
 };
